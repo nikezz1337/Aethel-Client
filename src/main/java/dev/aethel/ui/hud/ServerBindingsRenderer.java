@@ -95,6 +95,7 @@ public class ServerBindingsRenderer implements IMinecraft {
             float bw = blockWidth - BLOCK_SHRINK;
             float bh = MAIN_BLOCK_HEIGHT;
 
+            DrawUtil.drawShadow(m2, bx, by, bw, bh, ROUNDING, 8f, ColorProvider.rgba(0, 0, 0, 80));
             interfaceModule.drawGlow(m2, bx, by, bw, bh, ROUNDING, globalAlpha);
 
             int[] glow = ColorProvider.getOrbitalRect(t1, t2, 800.0, aInt);
@@ -136,6 +137,7 @@ public class ServerBindingsRenderer implements IMinecraft {
             float pillY = by + MAIN_BLOCK_HEIGHT + 1f;
 
             int[] pillGlow = ColorProvider.getOrbitalRect(t1, t2, 800.0, aInt);
+            DrawUtil.drawShadow(m2, pillX, pillY, pillW, pillH, BIND_ROUNDING, 8f, ColorProvider.rgba(0, 0, 0, 80));
             DrawUtil.drawRound(pillX - 0.5f, pillY - 0.5f, pillW + 1f, pillH + 1f, BIND_ROUNDING,
                     pillGlow[0], pillGlow[1], pillGlow[2], pillGlow[3]);
 

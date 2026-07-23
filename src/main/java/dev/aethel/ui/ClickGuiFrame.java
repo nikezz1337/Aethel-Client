@@ -3,6 +3,7 @@ package dev.aethel.ui;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
+import org.joml.Matrix4f;
 import org.lwjgl.glfw.GLFW;
 import dev.aethel.module.ModuleCategory;
 import dev.aethel.module.list.misc.ClientSounds;
@@ -52,27 +53,13 @@ public class ClickGuiFrame extends Screen implements IMinecraft {
         float openAnim = (float) Math.min(1, Math.max(0, openAnimation.getValue()));
         if (!open && openAnim < 0.1) close();
 
-        // Dark overlay из Ethereal
+        // Dark overlay
         int bgAlpha = (int) (openAnim * 100);
         DrawUtil.drawRound(0, 0, windowWidth, windowHeight, 0f, ColorProvider.rgba(0, 0, 0, bgAlpha));
 
-        float centerX = windowWidth / 2f;
-        float centerY = windowHeight / 2f;
-        float scale = openAnim;
-
         var matrixStack = context.getMatrices();
 
-        // Трансформируем координаты мыши
-        double transformedMouseX = scale > 0.01 ? (mouseX - centerX) / scale + centerX : centerX;
-        double transformedMouseY = scale > 0.01 ? (mouseY - centerY) / scale + centerY : centerY;
-
-        // Zoom animation from Ethereal
-        matrixStack.push();
-        matrixStack.translate(centerX, centerY, 0);
-        matrixStack.scale(scale, scale, 1);
-        matrixStack.translate(-centerX, -centerY, 0);
-
-        float panelWidth = 120f; // Пошире
+        float panelWidth = 120f;
         float spacing = 2.9f;
         float panelHeight = 270f;
         float panelTotalWidth = panels.size() * (panelWidth + spacing) - spacing;
@@ -82,16 +69,15 @@ public class ClickGuiFrame extends Screen implements IMinecraft {
 
         for (int i = 0; i < panels.size(); i++) {
             Panel panel = panels.get(i);
-            panel.getAnimationAlpha().setDuration(650);
-            panel.getAnimationAlpha().run(1);
-            panel.getAnimationAlpha().setEasing(Easing.QUINTIC_OUT);
+
+            panel.getAnimationAlpha().setValue(1f);
 
             panel.setX(startX + i * (panelWidth + spacing));
             panel.setY(panelY);
             panel.setWidth(panelWidth);
             panel.setHeight(panelHeight);
 
-            panel.render(matrixStack, (int)transformedMouseX, (int)transformedMouseY, delta);
+            panel.render(matrixStack, mouseX, mouseY, delta);
         }
 
         float searchW = 140;
@@ -100,12 +86,12 @@ public class ClickGuiFrame extends Screen implements IMinecraft {
         float searchY = panelY + panelHeight + 15;
 
         searchField.setBounds(searchX, searchY, searchW, searchH);
-        searchField.render(context, (int)transformedMouseX, (int)transformedMouseY, delta);
+        searchField.render(context, mouseX, mouseY, delta);
 
         themeManager.setX(20);
         themeManager.setY(panelY);
         themeManager.setHeight(panelHeight);
-        themeManager.render(matrixStack, (int)transformedMouseX, (int)transformedMouseY, delta);
+        themeManager.render(matrixStack, mouseX, mouseY, delta);
 
         for (Panel panel : panels) {
             boolean isMouseInPanel = HoverUtil.isHovered(mouseX, mouseY, panel.getX(), panel.getY(), panel.getWidth(), panel.getHeight());
@@ -122,6 +108,8 @@ public class ClickGuiFrame extends Screen implements IMinecraft {
                         float descPanelX = windowWidth / 2f - descPanelW / 2f;
                         float descPanelY = windowHeight / 2f - 180;
 
+                        Matrix4f descMat = matrixStack.peek().getPositionMatrix();
+                        DrawUtil.drawShadow(descMat, descPanelX, descPanelY, descPanelW, descPanelH, descCorner, 10f, ColorProvider.rgba(0, 0, 0, 100));
                         DrawUtil.drawRound(descPanelX, descPanelY, descPanelW, descPanelH, descCorner, ColorProvider.rgba(23, 23, 24, 255));
                         DrawUtil.drawRound(descPanelX + 3, descPanelY + 3, descPanelW - 6, descPanelH - 6, 5f, ColorProvider.rgba(17, 17, 17, 255));
                         DrawUtil.drawText(Fonts.SFREGULAR.get(), desc, descPanelX + descPadX, descPanelY + descPadY + 1, ColorProvider.rgba(255, 255, 255, 255), descTextSize);
@@ -129,9 +117,6 @@ public class ClickGuiFrame extends Screen implements IMinecraft {
                 }
             }
         }
-
-        matrixStack.pop();
-
 
         long window = mc.getWindow().getHandle();
         if (CursorManager.shouldBeHand()) GLFW.glfwSetCursor(window, GLFW.glfwCreateStandardCursor(GLFW.GLFW_HAND_CURSOR));
@@ -146,25 +131,18 @@ public class ClickGuiFrame extends Screen implements IMinecraft {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        float centerX = mc.getWindow().getScaledWidth() / 2f;
-        float centerY = mc.getWindow().getScaledHeight() / 2f;
-        float scale = (float) Math.min(1, Math.max(0, openAnimation.getValue()));
-
-        double transformedX = (mouseX - centerX) / scale + centerX;
-        double transformedY = (mouseY - centerY) / scale + centerY;
-
-        themeManager.mouseClicked(transformedX, transformedY, button);
-        searchField.mouseClicked(transformedX, transformedY, button);
+        themeManager.mouseClicked(mouseX, mouseY, button);
+        searchField.mouseClicked(mouseX, mouseY, button);
 
         if (searchField.isEmpty()) {
             for (Panel panel : panels) {
-                if (HoverUtil.isHovered(transformedX, transformedY, panel.getX(), panel.getY(), panel.getWidth(), panel.getHeight())) {
-                    panel.mouseClicked(transformedX, transformedY, button);
+                if (HoverUtil.isHovered(mouseX, mouseY, panel.getX(), panel.getY(), panel.getWidth(), panel.getHeight())) {
+                    panel.mouseClicked(mouseX, mouseY, button);
                 }
             }
         } else {
             for (Panel panel : panels) {
-                panel.mouseClicked(transformedX, transformedY, button);
+                panel.mouseClicked(mouseX, mouseY, button);
             }
         }
         return super.mouseClicked(mouseX, mouseY, button);
@@ -172,32 +150,18 @@ public class ClickGuiFrame extends Screen implements IMinecraft {
 
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        float centerX = mc.getWindow().getScaledWidth() / 2f;
-        float centerY = mc.getWindow().getScaledHeight() / 2f;
-        float scale = (float) Math.min(1, Math.max(0, openAnimation.getValue()));
-
-        double transformedX = (mouseX - centerX) / scale + centerX;
-        double transformedY = (mouseY - centerY) / scale + centerY;
-
-        themeManager.mouseReleased(transformedX, transformedY, button);
+        themeManager.mouseReleased(mouseX, mouseY, button);
         for (Panel panel : panels) {
-            panel.mouseReleased(transformedX, transformedY, button);
+            panel.mouseReleased(mouseX, mouseY, button);
         }
         return super.mouseReleased(mouseX, mouseY, button);
     }
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-        float centerX = mc.getWindow().getScaledWidth() / 2f;
-        float centerY = mc.getWindow().getScaledHeight() / 2f;
-        float scale = (float) Math.min(1, Math.max(0, openAnimation.getValue()));
-
-        double transformedX = (mouseX - centerX) / scale + centerX;
-        double transformedY = (mouseY - centerY) / scale + centerY;
-
-        themeManager.mouseScrolled(transformedX, transformedY, horizontalAmount, verticalAmount);
+        themeManager.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
         for (Panel panel : panels) {
-            panel.mouseScrolled(transformedX, transformedY, horizontalAmount, verticalAmount);
+            panel.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
         }
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
     }

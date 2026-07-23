@@ -2,7 +2,9 @@ package dev.aethel.module.list.render;
 
 import dev.aethel.config.FriendManager;
 import dev.aethel.event.list.EventHUD;
+import dev.aethel.module.list.render.Interface;
 import dev.aethel.util.IMinecraft;
+import dev.aethel.util.base.Instance;
 import dev.aethel.util.render.msdf.Fonts;
 import dev.aethel.util.render.msdf.MsdfFont;
 import dev.aethel.util.render.providers.ColorProvider;
@@ -21,6 +23,7 @@ import net.minecraft.util.math.Box;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RotationAxis;
 import net.minecraft.util.math.Vec3d;
+import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
@@ -218,20 +221,38 @@ public class NameTagsRender implements IMinecraft {
 
         float size = cached.fontSize();
         float textWidth = cached.width();
-        float pad = 2f;
+        float pad = 2.34f;
         float bgH = size + pad * 2f;
         float bgW = textWidth + pad * 2f;
         float bgX = x - bgW / 2f;
         float bgY = y - bgH;
 
-        int backgroundColor = cached.friend()
-                ? ColorProvider.rgba(0, 120, 0, 200)
-                : ColorProvider.rgba(8, 8, 10, 200);
+        int t1 = ColorProvider.getThemeColor();
+        int t2 = ColorProvider.getThemeColorTwo();
 
-        DrawUtil.drawRound(bgX, bgY + 1, bgW, bgH, 1.5f, backgroundColor);
+        int bgColor;
+        if (cached.friend()) {
+            bgColor = ColorProvider.rgba(0, 90, 0, 200);
+        } else {
+            bgColor = ColorProvider.rgba(
+                    ((t1 >> 16) & 0xFF) >> 2,
+                    ((t1 >> 8) & 0xFF) >> 2,
+                    (t1 & 0xFF) >> 2,
+                    200
+            );
+        }
 
-        // Render the name text
-        DrawUtil.drawText(font, cached.displayText(), bgX + pad, bgY + pad, size, 255);
+        float radius = 2f;
+
+        // Тень
+        Matrix4f mat = context.getMatrices().peek().getPositionMatrix();
+        DrawUtil.drawShadow(mat, bgX, bgY + 1, bgW, bgH, radius, 8f, ColorProvider.rgba(0, 0, 0, 100));
+
+        // Фон
+        DrawUtil.drawRound(bgX, bgY + 1, bgW, bgH, radius, bgColor);
+
+        // Имя
+        DrawUtil.drawText(font, cached.displayText(), bgX + pad, bgY + pad , size, 255);
         return bgY;
     }
 

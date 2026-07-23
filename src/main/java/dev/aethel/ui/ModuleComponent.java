@@ -4,6 +4,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RotationAxis;
+import org.joml.Matrix4f;
 import org.lwjgl.glfw.GLFW;
 import dev.aethel.module.Module;
 import dev.aethel.module.settings.*;
@@ -93,6 +94,15 @@ public class ModuleComponent extends Component {
             int bl = ColorProvider.interpolateColor(inactiveBase, ColorProvider.setAlpha(baseColor, (int)(maxA * phase2 * alpha * enabled)), enabled);
             int br = ColorProvider.interpolateColor(inactiveBase, ColorProvider.setAlpha(baseColor, (int)(maxA * phase3 * alpha * enabled)), enabled);
             int tr = ColorProvider.interpolateColor(inactiveBase, ColorProvider.setAlpha(baseColor, (int)(maxA * phase4 * alpha * enabled)), enabled);
+
+            // Theme-colored shadow behind active module — статичная, строго по контуру
+            float shadowSoftness = 5f;
+            int shadowColor = ColorProvider.setAlpha(baseColor, 65);
+            Matrix4f mat = matrixStack.peek().getPositionMatrix();
+            DrawUtil.drawShadow(mat, x + shadowSoftness, y + shadowSoftness,
+                    width - shadowSoftness * 2f, currentHeight - 0.5f - shadowSoftness * 2f,
+                    moduleRound, shadowSoftness, shadowColor);
+
             DrawUtil.drawRound(x, y, width, currentHeight - 0.5f, moduleRound, tl, bl, br, tr);
 
             float glowInset = 0.7f;
@@ -103,6 +113,13 @@ public class ModuleComponent extends Component {
             int glow4 = ColorProvider.interpolateColor(0, ColorProvider.setAlpha(baseColor, (int)(glowA * phase4)), enabled);
             DrawUtil.drawRound(x - glowInset, y - glowInset, width + glowInset * 2f, currentHeight - 0.5f + glowInset * 2f, moduleRound + 0.5f, glow1, glow2, glow3, glow4);
         } else {
+            // Standard dark shadow behind inactive module — статичная, строго по контуру
+            float shadowSoftness = 5f;
+            Matrix4f mat = matrixStack.peek().getPositionMatrix();
+            DrawUtil.drawShadow(mat, x + shadowSoftness, y + shadowSoftness,
+                    width - shadowSoftness * 2f, currentHeight - 0.5f - shadowSoftness * 2f,
+                    moduleRound, shadowSoftness, ColorProvider.rgba(0, 0, 0, 55));
+
             DrawUtil.drawRound(x, y, width, currentHeight - 0.5f, moduleRound, inactiveBase, inactiveBase);
         }
 

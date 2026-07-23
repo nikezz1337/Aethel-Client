@@ -1,0 +1,13 @@
+package dev.aethel.util.auction.ab.impl;
+
+import dev.aethel.util.auction.ab.ABItems;
+import lombok.experimental.UtilityClass;
+import net.minecraft.item.ItemStack;
+
+@UtilityClass
+public class ArrowItems {
+    public ItemStack getProklyatayaStrela() { return ABItems.adskayaStrela(); }
+    public ItemStack getParanoiaStrela() { return ABItems.paranoiaStrela(); }
+    public ItemStack getProklyataya() { return ABItems.proklyatayaStrela(); }
+    public ItemStack getSnezhnaya() { return ABItems.snezhnayaStrela(); }
+}

@@ -44,13 +44,13 @@ void main() {
 
     float centerDist = abs(uv.y - 0.5) * 2.0;
     float edgeMask = 1.0 - centerDist;
-    edgeMask = pow(edgeMask, 2.0);
+    edgeMask = pow(edgeMask, 0.8); // менее агрессивное затухание к краям
 
     vec2 flow = vec2(uv.x * 4.0 + t * 0.5, uv.y * 2.0);
 
     float energy = 0.0;
     vec2 euv = flow;
-    float amp = 1.0;
+    float amp = 1.5; // увеличена амплитуда энергии
     for (int i = 0; i < 4; i++) {
         float n = fbm(euv + vec2(t * 0.1, t * 0.07));
         float line = pow(max(0.0, 1.0 - abs(n - 0.5) * 3.5), 4.0);
@@ -59,22 +59,22 @@ void main() {
         amp *= 0.55;
     }
 
-    float flicker = 0.5 + 0.5 * pow(1.0 - abs(fbm(uv * 8.0 + vec2(t * 1.5, t * 1.2)) - 0.5) * 2.0, 2.5);
+    float flicker = 0.7 + 0.3 * pow(1.0 - abs(fbm(uv * 8.0 + vec2(t * 1.5, t * 1.2)) - 0.5) * 2.0, 2.5);
     energy *= flicker;
 
-    float pulse = 0.6 + 0.4 * sin(t * 2.0 + uv.x * 6.28);
+    float pulse = 0.8 + 0.2 * sin(t * 2.0 + uv.x * 6.28);
     energy *= pulse;
 
-    float core = pow(1.0 - centerDist, 4.0);
-    float glow = pow(1.0 - centerDist, 1.5) * 0.4;
+    float core = pow(1.0 - centerDist, 2.5);
+    float glow = pow(1.0 - centerDist, 1.2) * 0.8;
 
-    float intensity = clamp(energy * edgeMask * 1.8, 0.0, 1.0);
+    float intensity = clamp(energy * edgeMask * 2.5, 0.0, 1.0);
 
-    vec3 brightCol = vec3(min(max(color.r, max(color.g, color.b)) * 0.6 + 0.4, 1.0));
+    vec3 brightCol = vec3(1.0, 1.0, 1.0); // чистый белый для максимальной яркости
     vec3 edgeCol = mix(color, brightCol, core * intensity);
-    edgeCol = mix(edgeCol, color2, glow * 0.2);
+    edgeCol = mix(edgeCol, color2, glow * 0.4);
 
-    float outAlpha = clamp(alpha * (intensity * 0.9 + glow * 0.3) * edgeMask, 0.0, 1.0);
+    float outAlpha = clamp(alpha * (intensity * 1.0 + glow * 0.5) * edgeMask, 0.0, 1.0);
     if (outAlpha <= 0.003) discard;
     OutColor = vec4(edgeCol, outAlpha);
 }

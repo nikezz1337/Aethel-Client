@@ -7,14 +7,16 @@ import dev.aethel.event.list.EventHUD;
 import dev.aethel.module.Module;
 import dev.aethel.module.ModuleCategory;
 import dev.aethel.module.ModuleInformation;
-import dev.aethel.module.settings.SliderSetting;
+import dev.aethel.module.settings.BooleanSetting;
+import dev.aethel.module.settings.ModeListSetting;
+import dev.aethel.module.list.render.Interface;
+import dev.aethel.util.base.Instance;
 import dev.aethel.util.render.ShaderUtil;
 import dev.aethel.util.render.msdf.Fonts;
 import dev.aethel.util.render.providers.ColorProvider;
 import dev.aethel.util.render.renderers.DrawUtil;
 import net.minecraft.client.gl.GlUniform;
 import net.minecraft.client.gl.ShaderProgram;
-import net.minecraft.client.gl.ShaderProgramKeys;
 import net.minecraft.client.render.*;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
@@ -24,7 +26,6 @@ import net.minecraft.entity.projectile.thrown.*;
 import net.minecraft.item.*;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.RotationAxis;
@@ -44,11 +45,19 @@ import java.util.List;
 )
 public class Prediction extends Module {
 
-    private final SliderSetting maxTicks = new SliderSetting("Max Ticks", 150, 20, 300, 10);
-    private final SliderSetting maxDistance = new SliderSetting("Max Distance", 250, 50, 500, 10);
-    private final SliderSetting lineWidth = new SliderSetting("Line Width", 4.0, 1.0, 8.0, 0.5);
+    public final ModeListSetting targets = new ModeListSetting("Цели",
+            new BooleanSetting("Жемчуг", true),
+            new BooleanSetting("Стрелы", true),
+            new BooleanSetting("Зелья", true),
+            new BooleanSetting("Снежки/яйца", true),
+            new BooleanSetting("Трезубцы", true),
+            new BooleanSetting("Фейерверки", true),
+            new BooleanSetting("Удочки", true),
+            new BooleanSetting("Опыт/з.заряды", true),
+            new BooleanSetting("Предметы", true)
+    );
 
-    record ImpactPoint(Vec3d position, int ticks, Identifier texture) {}
+    record ImpactPoint(Vec3d position, int ticks, ItemStack stack) {}
 
     final List<ImpactPoint> impactPoints = new ArrayList<>();
 
@@ -99,6 +108,21 @@ public class Prediction extends Module {
         }
     }
 
+    private ItemStack getItemStackForProjectile(ProjectileEntity proj) {
+        if (proj instanceof EnderPearlEntity) return new ItemStack(Items.ENDER_PEARL);
+        if (proj instanceof ExperienceBottleEntity) return new ItemStack(Items.EXPERIENCE_BOTTLE);
+        if (proj instanceof PotionEntity) return new ItemStack(Items.SPLASH_POTION);
+        if (proj instanceof SnowballEntity) return new ItemStack(Items.SNOWBALL);
+        if (proj instanceof EggEntity) return new ItemStack(Items.EGG);
+        if (proj instanceof TridentEntity) return new ItemStack(Items.TRIDENT);
+        if (proj instanceof ArrowEntity) return new ItemStack(Items.ARROW);
+        if (proj instanceof SpectralArrowEntity) return new ItemStack(Items.SPECTRAL_ARROW);
+        if (proj instanceof FishingBobberEntity) return new ItemStack(Items.FISHING_ROD);
+        if (proj instanceof FireworkRocketEntity) return new ItemStack(Items.FIREWORK_ROCKET);
+        if (proj instanceof WindChargeEntity || proj instanceof BreezeWindChargeEntity) return new ItemStack(Items.WIND_CHARGE);
+        return new ItemStack(Items.ENDER_PEARL);
+    }
+
     @Subscribe
     public void onRender3D(Event3DRender e) {
         if (mc.player == null || mc.world == null) return;
@@ -114,7 +138,7 @@ public class Prediction extends Module {
         RenderSystem.disableDepthTest();
 
         int themeColor = ColorProvider.getThemeColor();
-        float lw = lineWidth.getFloatValue();
+        float lw = 11.0f;
 
         if (startMillis < 0L) startMillis = System.currentTimeMillis();
         float time = (System.currentTimeMillis() - startMillis) / 1000.0F;
@@ -124,32 +148,72 @@ public class Prediction extends Module {
             float r = ((themeColor >> 16) & 0xFF) / 255.0F;
             float g = ((themeColor >> 8) & 0xFF) / 255.0F;
             float b = (themeColor & 0xFF) / 255.0F;
-            float r2 = Math.max(0, Math.min(255, ((themeColor >> 16) & 0xFF) + 60)) / 255.0F;
-            float g2 = Math.max(0, Math.min(255, ((themeColor >> 8) & 0xFF) - 20)) / 255.0F;
-            float b2 = Math.max(0, Math.min(255, (themeColor & 0xFF) + 40)) / 255.0F;
+            float r2 = Math.min(1.0f, r + 0.6f);
+            float g2 = Math.min(1.0f, g + 0.6f);
+            float b2 = Math.min(1.0f, b + 0.6f);
 
             setUniform(shader, "color", r, g, b);
             setUniform(shader, "color2", r2, g2, b2);
             setUniform(shader, "time", time);
-            setUniform(shader, "speed", 1.2f);
-            setUniform(shader, "edgeWidth", 1.5f);
-            setUniform(shader, "alpha", 0.65f);
+            setUniform(shader, "speed", 3.0f);
+            setUniform(shader, "edgeWidth", 6.0f);
+            setUniform(shader, "alpha", 1.0f);
         }
+
+        boolean enderPearls = targets.isEnabled("Жемчуг");
+        boolean arrows = targets.isEnabled("Стрелы");
+        boolean potions = targets.isEnabled("Зелья");
+        boolean snowballs = targets.isEnabled("Снежки/яйца");
+        boolean tridents = targets.isEnabled("Трезубцы");
+        boolean fireworks = targets.isEnabled("Фейерверки");
+        boolean fishing = targets.isEnabled("Удочки");
+        boolean expWind = targets.isEnabled("Опыт/з.заряды");
+        boolean renderItems = targets.isEnabled("Предметы");
+
+        int maxTicks = 200;
+        float maxDist = 300f;
 
         for (Entity entity : mc.world.getEntities()) {
             if (entity.isRemoved()) continue;
 
             if (entity instanceof ProjectileEntity proj && proj.getVelocity().lengthSquared() > 0.01) {
-                Identifier tex = getTextureForProjectile(proj);
-                double gravity = getGravityFor(proj);
+                boolean shouldRender = false;
+                double gravity = 0.03;
 
+                if (proj instanceof EnderPearlEntity && enderPearls) {
+                    shouldRender = true;
+                } else if (proj instanceof ExperienceBottleEntity && expWind) {
+                    shouldRender = true;
+                    gravity = 0.07;
+                } else if (proj instanceof PotionEntity && potions) {
+                    shouldRender = true;
+                    gravity = 0.05;
+                } else if ((proj instanceof SnowballEntity || proj instanceof EggEntity) && snowballs) {
+                    shouldRender = true;
+                } else if (proj instanceof TridentEntity && tridents) {
+                    shouldRender = true;
+                } else if ((proj instanceof ArrowEntity || proj instanceof SpectralArrowEntity) && arrows) {
+                    shouldRender = true;
+                    gravity = 0.05;
+                } else if (proj instanceof FishingBobberEntity && fishing) {
+                    shouldRender = true;
+                    gravity = 0.04;
+                } else if (proj instanceof FireworkRocketEntity && fireworks) {
+                    shouldRender = true;
+                    gravity = 0.03;
+                } else if ((proj instanceof WindChargeEntity || proj instanceof BreezeWindChargeEntity) && expWind) {
+                    shouldRender = true;
+                }
+
+                if (!shouldRender) continue;
+
+                ItemStack stack = getItemStackForProjectile(proj);
                 Vec3d origin = proj.getPos();
                 Vec3d mot = proj.getVelocity();
                 Vec3d pos = origin;
                 int ticks = 0;
-                float maxDist = maxDistance.getFloatValue();
 
-                for (int i = 0; i < maxTicks.getIntValue(); i++) {
+                for (int i = 0; i < maxTicks; i++) {
                     Vec3d prev = pos;
                     pos = pos.add(mot);
 
@@ -160,7 +224,7 @@ public class Prediction extends Module {
                     }
 
                     Vec3d end = pos;
-                    Boolean hitBlock = false;
+                    boolean hitBlock = false;
 
                     if (mc.world != null) {
                         RaycastContext ctx = new RaycastContext(prev, pos, RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.NONE, proj);
@@ -175,29 +239,28 @@ public class Prediction extends Module {
 
                     if (hitBlock || end.y < -128.0D || origin.distanceTo(pos) > maxDist) {
                         if (mot.lengthSquared() > 0.04) {
-                            impactPoints.add(new ImpactPoint(end, ticks, tex));
+                            impactPoints.add(new ImpactPoint(end, ticks, stack));
                         }
                         break;
                     }
                     ticks++;
                 }
-            } else if (entity instanceof ItemEntity item && item.getVelocity().lengthSquared() > 0.01) {
-                Identifier tex = getTextureForItem(item.getStack().getItem());
+            } else if (renderItems && entity instanceof ItemEntity item && item.getVelocity().lengthSquared() > 0.01) {
+                ItemStack stack = item.getStack();
 
                 Vec3d origin = item.getPos();
                 Vec3d mot = item.getVelocity();
                 Vec3d pos = origin;
                 int ticks = 0;
-                float maxDist = maxDistance.getFloatValue();
 
-                for (int i = 0; i < maxTicks.getIntValue(); i++) {
+                for (int i = 0; i < maxTicks; i++) {
                     Vec3d prev = pos;
                     pos = pos.add(mot);
                     mot = mot.multiply(0.99);
                     mot = mot.subtract(0, 0.04, 0);
 
                     Vec3d end = pos;
-                    Boolean hitBlock = false;
+                    boolean hitBlock = false;
 
                     if (mc.world != null) {
                         RaycastContext ctx = new RaycastContext(prev, pos, RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.NONE, item);
@@ -212,7 +275,7 @@ public class Prediction extends Module {
 
                     if (hitBlock || end.y < -128.0D || origin.distanceTo(pos) > maxDist) {
                         if (mot.lengthSquared() > 0.04) {
-                            impactPoints.add(new ImpactPoint(end, ticks, tex));
+                            impactPoints.add(new ImpactPoint(end, ticks, stack));
                         }
                         break;
                     }
@@ -231,6 +294,9 @@ public class Prediction extends Module {
     public void onRenderHUD(EventHUD e) {
         if (impactPoints.isEmpty()) return;
 
+        Interface iface = Instance.get(Interface.class);
+        if (iface == null) return;
+
         Vec3d camPos = mc.gameRenderer.getCamera().getPos();
         cachedCamPos.set((float) camPos.x, (float) camPos.y, (float) camPos.z);
 
@@ -244,40 +310,67 @@ public class Prediction extends Module {
         float fov = mc.gameRenderer.getFov(camera, e.getRenderTickCounter().getTickDelta(true), !mc.player.isSubmergedInWater());
         cachedTanHalfFov = Math.tan(Math.toRadians(fov / 2.0));
 
+        DrawContext ctx = e.getDrawContext();
+        Matrix4f m = ctx.getMatrices().peek().getPositionMatrix();
+
+        int t1 = ColorProvider.getThemeColor();
+        int t2 = ColorProvider.getThemeColorTwo();
+
+        // Фон как у всех HUD элементов — тема на 25% яркости, альфа 135
+        int bgColor = ColorProvider.rgba(
+                ((t1 >> 16) & 0xFF) >> 2,
+                ((t1 >> 8) & 0xFF) >> 2,
+                (t1 & 0xFF) >> 2,
+                135
+        );
+
+        // Орбитальный градиент для обводки
+        int[] glow = ColorProvider.getOrbitalRect(t1, t2, 800.0, 255);
+        int tmp = glow[1]; glow[1] = glow[3]; glow[3] = tmp;
+
+        float borderRadius = 3f;
+        float textSize = 6f;
+        float iconRenderSize = 8;
+        float padX = 3;
+        float padY = 2;
+        float sep = 2;
+
         for (ImpactPoint pt : impactPoints) {
             Vector2f screen = projectToScreen(pt.position.x, pt.position.y - 0.3F, pt.position.z);
             if (screen.x == Float.MAX_VALUE) continue;
 
-            double time = pt.ticks * 50.0 / 1000.0;
-            String text = String.format("%.1f сек.", time);
-            float textWidth = Fonts.SFREGULAR.get().getWidth(text, 5);
-            float totalWidth = textWidth + 8 + 8;
+            double timeSec = pt.ticks * 50.0 / 1000.0;
+            String text = String.format("%.1f сек.", timeSec);
+
+            float textWidth = Fonts.SFBOLD.get().getWidth(text, textSize);
+            float totalWidth = iconRenderSize + sep + textWidth + padX * 2;
+            float totalHeight = iconRenderSize + padY * 2;
             float x = screen.x - totalWidth / 2;
             float y = screen.y;
 
-            DrawUtil.drawRound(x + 2, y + 2 - 3, totalWidth - 4, 12 - 3, 0, ColorProvider.rgba(24, 24, 24, 80));
-
-            drawTexture(e.getDrawContext(), pt.texture, (int) x + 4, (int) y + 2 + 1 - 4, 8, 8);
-
-            DrawUtil.drawText(Fonts.SFBOLD.get(), text, x + 14, y + 4.5F - 4, -1, 5);
+            // Тень (самый нижний слой)
+            DrawUtil.drawShadow(m, x, y, totalWidth, totalHeight, borderRadius, 10f, ColorProvider.rgba(0, 0, 0, 80));
+            // Глоу (орбитальное свечение)
+            iface.drawGlow(m, x, y, totalWidth, totalHeight, borderRadius, 1.0f);
+            // Орбитальная обводка
+            DrawUtil.drawRound(x - 0.5f, y - 0.5f, totalWidth + 1f, totalHeight + 1f, borderRadius, glow[0], glow[1], glow[2], glow[3]);
+            // Тёмный фон
+            DrawUtil.drawRound(x, y, totalWidth, totalHeight, borderRadius, bgColor);
+            // Разделитель
+            float sepX = x + iconRenderSize + padX + 0.5f;
+            DrawUtil.drawRound(sepX, y + 2f, 0.5f, totalHeight - 4f, 0.2f, ColorProvider.rgba(120, 120, 120, 120));
+            // Иконка предмета
+            MatrixStack matrices = ctx.getMatrices();
+            matrices.push();
+            matrices.translate(x + padX, y + padY, 0);
+            matrices.scale(0.7f, 0.7f, 1.0f);
+            ctx.drawItem(pt.stack, 0, 0);
+            matrices.pop();
+            // Текст
+            float textX = sepX + sep;
+            float textY = y + (totalHeight - textSize) * 0.5f;
+            DrawUtil.drawText(Fonts.SFBOLD.get(), text, textX, textY, ColorProvider.rgba(233, 233, 233, 255), textSize);
         }
-    }
-
-    private void drawTexture(DrawContext ctx, Identifier texture, int x, int y, int w, int h) {
-        RenderSystem.setShader(ShaderProgramKeys.POSITION_TEX_COLOR);
-        RenderSystem.setShaderTexture(0, texture);
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-
-        Matrix4f m = ctx.getMatrices().peek().getPositionMatrix();
-        BufferBuilder buf = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE_COLOR);
-        buf.vertex(m, x, y + h, 0).texture(0, 1).color(255, 255, 255, 255);
-        buf.vertex(m, x + w, y + h, 0).texture(1, 1).color(255, 255, 255, 255);
-        buf.vertex(m, x + w, y, 0).texture(1, 0).color(255, 255, 255, 255);
-        buf.vertex(m, x, y, 0).texture(0, 0).color(255, 255, 255, 255);
-        BufferRenderer.drawWithGlobalProgram(buf.end());
-
-        RenderSystem.disableBlend();
     }
 
     private Vector2f projectToScreen(double wx, double wy, double wz) {
@@ -299,36 +392,5 @@ public class Prediction extends Module {
                 (float) (-tempVec.x * scale + w),
                 (float) (h - tempVec.y * scale)
         );
-    }
-
-    private double getGravityFor(ProjectileEntity proj) {
-        if (proj instanceof ExperienceBottleEntity) return 0.07;
-        if (proj instanceof PotionEntity) return 0.05;
-        if (proj instanceof PersistentProjectileEntity) return 0.05;
-        if (proj instanceof FishingBobberEntity) return 0.04;
-        if (proj instanceof FireworkRocketEntity) return 0.03;
-        return 0.03;
-    }
-
-    private Identifier getTextureForProjectile(ProjectileEntity proj) {
-        if (proj instanceof EnderPearlEntity) return Identifier.of("minecraft", "textures/item/ender_pearl.png");
-        if (proj instanceof ExperienceBottleEntity) return Identifier.of("minecraft", "textures/item/experience_bottle.png");
-        if (proj instanceof PotionEntity) return Identifier.of("minecraft", "textures/item/potion.png");
-        if (proj instanceof SnowballEntity) return Identifier.of("minecraft", "textures/item/snowball.png");
-        if (proj instanceof EggEntity) return Identifier.of("minecraft", "textures/item/egg.png");
-        if (proj instanceof TridentEntity) return Identifier.of("minecraft", "textures/item/trident.png");
-        if (proj instanceof ArrowEntity || proj instanceof SpectralArrowEntity) return Identifier.of("minecraft", "textures/item/arrow.png");
-        if (proj instanceof FishingBobberEntity) return Identifier.of("minecraft", "textures/item/fishing_rod.png");
-        if (proj instanceof FireworkRocketEntity) return Identifier.of("minecraft", "textures/item/firework_rocket.png");
-        if (proj instanceof WindChargeEntity || proj instanceof BreezeWindChargeEntity) return Identifier.of("minecraft", "textures/item/wind_charge.png");
-        String name = proj.getClass().getSimpleName().toLowerCase();
-        if (name.contains("snowball")) return Identifier.of("minecraft", "textures/item/snowball.png");
-        if (name.contains("egg")) return Identifier.of("minecraft", "textures/item/egg.png");
-        return Identifier.of("minecraft", "textures/item/ender_pearl.png");
-    }
-
-    private Identifier getTextureForItem(Item item) {
-        Identifier itemId = net.minecraft.registry.Registries.ITEM.getId(item);
-        return Identifier.of(itemId.getNamespace(), "textures/item/" + itemId.getPath() + ".png");
     }
 }

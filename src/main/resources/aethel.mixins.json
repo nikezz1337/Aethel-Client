@@ -34,6 +34,7 @@
     "DrawContextNameProtectMixin",
     "TextVisitFactoryMixin",
     "HitboxMixin",
+    "GenericContainerScreenMixin",
     "LightmapTextureManagerMixin",
     "ItemCooldownManagerAccessor",
     "ChatHudAccessor",

@@ -2,6 +2,7 @@ package dev.aethel.ui;
 
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.MathHelper;
+import org.joml.Matrix4f;
 import org.joml.Vector4f;
 import dev.aethel.Aethel;
 import dev.aethel.module.ModuleCategory;
@@ -49,11 +50,15 @@ public class Panel implements IMinecraft {
     }
 
     public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
-        animationAlpha.setValue(1);
+        animationAlpha.setValue(1f);
         float alpha = 255f;
         float cornerRadius = 7f; // Минимальное закругление
         float headerHeight = 19f;
         float innerInset = 6f; // Чуть больше отступ — внутренняя панель уже
+
+        // Тень под внешней панелью
+        Matrix4f shadowMat = matrixStack.peek().getPositionMatrix();
+        DrawUtil.drawShadow(shadowMat, x, y, width, height, cornerRadius, 12f, ColorProvider.rgba(0, 0, 0, 100));
 
         // Внешняя панель — серая #161616
         int panelColor = ColorProvider.rgba(23, 23, 24, 255);
@@ -76,6 +81,7 @@ public class Panel implements IMinecraft {
         float innerY = y + headerHeight + 2f;
         float innerWidth = width - innerInset * 2f;
         float innerHeight = height - headerHeight - 2f - innerInset;
+        DrawUtil.drawShadow(shadowMat, innerX, innerY, innerWidth, innerHeight, 5.5f, 6f, ColorProvider.rgba(0, 0, 0, 40));
         DrawUtil.drawRound(innerX, innerY, innerWidth, innerHeight, 5.5f, ColorProvider.rgba(17, 17, 17, 255));
 
         float offset = 0;

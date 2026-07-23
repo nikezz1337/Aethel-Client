@@ -1,6 +1,7 @@
 package dev.aethel.mixin;
 
 import dev.aethel.event.list.EventHandledScreen;
+import dev.aethel.module.list.misc.AuctionHelperModule;
 import dev.aethel.module.list.misc.ItemScroller;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
@@ -50,5 +51,11 @@ public abstract class HandledScreenMixin {
     @Inject(method = "render", at = @At("TAIL"))
     private void onRenderTail(DrawContext context, int mouseX, int mouseY, float tickDelta, CallbackInfo ci) {
         new EventHandledScreen(focusedSlot).post();
+    }
+
+    @Inject(method = "drawSlot", at = @At("TAIL"))
+    private void onDrawSlot(DrawContext context, Slot slot, CallbackInfo ci) {
+        AuctionHelperModule module = AuctionHelperModule.getInstance();
+        if (module.isEnabled()) module.onRenderChest(context, slot);
     }
 }

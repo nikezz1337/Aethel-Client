@@ -125,6 +125,7 @@ public class TargetHUDRenderer implements IMinecraft {
 
         Matrix4f posMat = context.getMatrices().peek().getPositionMatrix();
 
+        DrawUtil.drawShadow(posMat, x, y, width, height, panelRadius, 8f, ColorProvider.rgba(0, 0, 0, 80));
         interfaceModule.drawGlow(posMat, x, y, width, height, panelRadius, animAlpha);
         DrawUtil.drawRound(x - 0.5f, y - 0.5f, width + 1f, height + 1f, panelRadius, glow[0], glow[1], glow[2], glow[3]);
         DrawUtil.drawRound(x, y, width, height, panelRadius, bgColor);

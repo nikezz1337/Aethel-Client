@@ -9,6 +9,7 @@ import dev.aethel.util.render.providers.ColorProvider;
 import dev.aethel.util.render.renderers.DrawUtil;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.util.math.MathHelper;
+import org.joml.Matrix4f;
 
 public class TotemCounterRenderer implements IMinecraft {
     private final Interface interfaceModule;
@@ -40,6 +41,8 @@ public class TotemCounterRenderer implements IMinecraft {
 
         float iconW = Fonts.ICONS_NURIK.get().getWidth("H", 8);
 
+        Matrix4f m = context.getMatrices().peek().getPositionMatrix();
+        DrawUtil.drawShadow(m, posX, posY, currentWidth, height, 3, 8f, ColorProvider.rgba(0, 0, 0, 80));
         interfaceModule.drawBackground(posX, posY, currentWidth, height, 3, 255);
 
         DrawUtil.drawRound(posX + iconW + 4.5f, posY + 2, 0.5f, 10.5f, 0, ColorProvider.rgba(88, 88, 88, 255));

@@ -125,6 +125,7 @@ public class WatermarkRenderer implements IMinecraft {
         int tmp = glow[1]; glow[1] = glow[3]; glow[3] = tmp;
 
         interfaceModule.drawGlow(m, x, y, w, h, radius, 1.0f);
+        DrawUtil.drawShadow(m, x, y, w, h, radius, 8f, ColorProvider.rgba(0, 0, 0, 80));
         DrawUtil.drawRound(x - 0.5f, y - 0.5f, w + 1f, h + 1f, radius, glow[0], glow[1], glow[2], glow[3]);
         DrawUtil.drawRound(x, y, w, h, radius, bgColor);
 

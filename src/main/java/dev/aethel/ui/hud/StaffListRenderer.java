@@ -95,6 +95,7 @@ public class StaffListRenderer implements IMinecraft {
 
         Matrix4f m = context.getMatrices().peek().getPositionMatrix();
 
+        DrawUtil.drawShadow(m, x, y, curW, totalH, minRadius, 8f, ColorProvider.rgba(0, 0, 0, 80));
         interfaceModule.drawGlow(m, x, y, curW, totalH, minRadius, globalAlpha);
         DrawUtil.drawRound(x - 0.5f, y - 0.5f, curW + 1f, totalH + 1f, minRadius, glow[0], glow[1], glow[2], glow[3]);
         DrawUtil.drawRound(x, y, curW, totalH, minRadius, bgColor);

@@ -2,6 +2,8 @@ package dev.aethel.util.render.renderers;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.gl.GlUniform;
+import net.minecraft.client.gl.ShaderProgram;
 import net.minecraft.client.gl.ShaderProgramKeys;
 import net.minecraft.client.render.*;
 import net.minecraft.client.util.math.MatrixStack;
@@ -9,10 +11,12 @@ import net.minecraft.text.Text;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import org.jetbrains.annotations.NotNull;
+import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 import org.lwjgl.opengl.GL11;
 import dev.aethel.util.IMinecraft;
+import dev.aethel.util.render.ShaderUtil;
 import dev.aethel.util.render.builders.Builder;
 import dev.aethel.util.render.builders.states.QuadColorState;
 import dev.aethel.util.render.builders.states.QuadRadiusState;
@@ -367,6 +371,91 @@ public class DrawUtil implements IMinecraft {
                 .smoothness(smoothness)
                 .build();
         rectangle.render(x - 0.5f,y - 0.5f);
+    }
+
+    public static void drawShadow(Matrix4f matrix, float x, float y, float width, float height,
+                                   float radius, float softness, int color) {
+        drawShadow(matrix, x, y, width, height, radius, softness, color, color, color, color);
+    }
+
+    public static void drawShadow(Matrix4f matrix, float x, float y, float width, float height,
+                                   float radius, float softness,
+                                   int topLeftColor, int topRightColor, int bottomLeftColor, int bottomRightColor) {
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+
+        ShaderProgram shader = RenderSystem.setShader(ShaderUtil.shadowRect);
+        if (shader == null) return;
+
+        float extendedWidth = width + softness * 2.0f;
+        float extendedHeight = height + softness * 2.0f;
+        float drawX = x - softness;
+        float drawY = y - softness;
+
+        GlUniform sizeUniform = shader.getUniform("Size");
+        GlUniform softnessUniform = shader.getUniform("Softness");
+        GlUniform radiusUniform = shader.getUniform("Radius");
+        GlUniform topLeftColorUniform = shader.getUniform("TopLeftColor");
+        GlUniform topRightColorUniform = shader.getUniform("TopRightColor");
+        GlUniform bottomLeftColorUniform = shader.getUniform("BottomLeftColor");
+        GlUniform bottomRightColorUniform = shader.getUniform("BottomRightColor");
+
+        if (sizeUniform != null) sizeUniform.set(extendedWidth, extendedHeight);
+        if (softnessUniform != null) softnessUniform.set(softness);
+        if (radiusUniform != null) radiusUniform.set(radius);
+
+        if (topLeftColorUniform != null) {
+            int a = (topLeftColor >> 24) & 0xFF;
+            if (a == 0) a = 255;
+            topLeftColorUniform.set(
+                    ((topLeftColor >> 16) & 0xFF) / 255f,
+                    ((topLeftColor >> 8) & 0xFF) / 255f,
+                    (topLeftColor & 0xFF) / 255f,
+                    a / 255f
+            );
+        }
+
+        if (topRightColorUniform != null) {
+            int a = (topRightColor >> 24) & 0xFF;
+            if (a == 0) a = 255;
+            topRightColorUniform.set(
+                    ((topRightColor >> 16) & 0xFF) / 255f,
+                    ((topRightColor >> 8) & 0xFF) / 255f,
+                    (topRightColor & 0xFF) / 255f,
+                    a / 255f
+            );
+        }
+
+        if (bottomLeftColorUniform != null) {
+            int a = (bottomLeftColor >> 24) & 0xFF;
+            if (a == 0) a = 255;
+            bottomLeftColorUniform.set(
+                    ((bottomLeftColor >> 16) & 0xFF) / 255f,
+                    ((bottomLeftColor >> 8) & 0xFF) / 255f,
+                    (bottomLeftColor & 0xFF) / 255f,
+                    a / 255f
+            );
+        }
+
+        if (bottomRightColorUniform != null) {
+            int a = (bottomRightColor >> 24) & 0xFF;
+            if (a == 0) a = 255;
+            bottomRightColorUniform.set(
+                    ((bottomRightColor >> 16) & 0xFF) / 255f,
+                    ((bottomRightColor >> 8) & 0xFF) / 255f,
+                    (bottomRightColor & 0xFF) / 255f,
+                    a / 255f
+            );
+        }
+
+        BufferBuilder buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
+        buffer.vertex(matrix, drawX, drawY, 0).texture(0, 0);
+        buffer.vertex(matrix, drawX, drawY + extendedHeight, 0).texture(0, 1);
+        buffer.vertex(matrix, drawX + extendedWidth, drawY + extendedHeight, 0).texture(1, 1);
+        buffer.vertex(matrix, drawX + extendedWidth, drawY, 0).texture(1, 0);
+        BufferRenderer.drawWithGlobalProgram(buffer.end());
+
+        RenderSystem.disableBlend();
     }
 
     public static void drawText(MsdfFont font, String text, float x, float y, int color, float size) {

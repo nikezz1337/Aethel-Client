@@ -1,6 +1,7 @@
 package dev.aethel.ui.component;
 
 import net.minecraft.client.gui.DrawContext;
+import org.joml.Matrix4f;
 import org.lwjgl.glfw.GLFW;
 import dev.aethel.util.cursor.CursorManager;
 import dev.aethel.util.render.helper.HoverUtil;
@@ -29,6 +30,10 @@ public class SearchField {
         if (HoverUtil.isHovered(mouseX, mouseY, x, y, width, height)) {
             CursorManager.requestIBeam();
         }
+
+        // Тень под строкой поиска
+        Matrix4f mat = context.getMatrices().peek().getPositionMatrix();
+        DrawUtil.drawShadow(mat, x, y, width, height, 4f, 10f, ColorProvider.rgba(0, 0, 0, 80));
 
         DrawUtil.drawRoundBlur(x, y, width, height, 4, ColorProvider.rgba(9, 0, 17, 200), 10);
         DrawUtil.drawRound(x - 0.5f, y - 0.5f, width + 1, height + 1, 4.5f, ColorProvider.rgba(80, 80, 85, 100));

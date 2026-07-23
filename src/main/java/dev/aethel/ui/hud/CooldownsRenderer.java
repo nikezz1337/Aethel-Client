@@ -87,6 +87,7 @@ public class CooldownsRenderer implements IMinecraft {
 
         Matrix4f m2 = context.getMatrices().peek().getPositionMatrix();
 
+        DrawUtil.drawShadow(m2, x, y, curW, totalH, ROUNDING, 8f, ColorProvider.rgba(0, 0, 0, 80));
         interfaceModule.drawGlow(m2, x, y, curW, totalH, ROUNDING, globalAlpha);
 
         int[] glow = ColorProvider.getOrbitalRect(t1, t2, 800.0, aInt);

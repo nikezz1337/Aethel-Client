@@ -8,6 +8,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.MathHelper;
+import org.joml.Matrix4f;
 import dev.aethel.util.IMinecraft;
 import dev.aethel.util.cursor.CursorManager;
 import dev.aethel.util.render.helper.HoverUtil;
@@ -193,6 +194,10 @@ public class ThemeManagerWindow implements IMinecraft {
         float cornerRadius = 8f;
         float headerHeight = 20f;
         float bottomBarHeight = 26f;
+
+        // Тень под окном тем
+        Matrix4f shadowMat = matrixStack.peek().getPositionMatrix();
+        DrawUtil.drawShadow(shadowMat, currentX, y, width, height, cornerRadius, 12f, ColorProvider.rgba(0, 0, 0, 100));
 
         DrawUtil.drawRoundBlur(currentX, y, width, height, cornerRadius, ColorProvider.rgba(75, 75, 75, (int)(255 * alphaRatio)), 20f);
         DrawUtil.drawRound(currentX, y, width, height, cornerRadius, ColorProvider.rgba(14, 14, 16, (int)(130 * alphaRatio)));

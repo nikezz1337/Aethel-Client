@@ -91,6 +91,8 @@ public class ModuleStorage implements IMinecraft {
         modules.add(new HandModule());
         modules.add(new PvPSafe());
         modules.add(new FreeCamera());
+        modules.add(AutoBuyModule.getInstance());
+        modules.add(AuctionHelperModule.getInstance());
 
         Aethel.getInstance().getEventBus().register(this);
     }

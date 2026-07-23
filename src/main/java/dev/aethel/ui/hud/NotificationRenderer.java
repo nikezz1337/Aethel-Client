@@ -176,6 +176,7 @@ public class NotificationRenderer {
 
             Matrix4f m = matrices.peek().getPositionMatrix();
 
+            DrawUtil.drawShadow(m, x, y, width, height, RADIUS, 8f, ColorProvider.rgba(0, 0, 0, 80));
             interfaceModule.drawGlow(m, x, y, width, height, RADIUS, clampedAlpha);
 
             DrawUtil.drawRound(x - 0.5f, y - 0.5f, width + 1f, height + 1f, RADIUS, glow[0], glow[1], glow[2], glow[3]);
