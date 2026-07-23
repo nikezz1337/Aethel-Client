@@ -67,7 +67,11 @@ public class BlockOverlay extends Module {
         if (result != null && result.getType() == HitResult.Type.BLOCK) {
             BlockPos pos = result.getBlockPos();
             if (pos != null && !mc.world.getBlockState(pos).isAir()) {
-                VoxelShape shape = mc.world.getBlockState(pos).getOutlineShape(mc.world, pos);
+                var state = mc.world.getBlockState(pos);
+                VoxelShape shape = state.getOutlineShape(mc.world, pos);
+                if (shape == null || shape.isEmpty()) {
+                    shape = state.getCollisionShape(mc.world, pos);
+                }
                 if (shape != null && !shape.isEmpty()) {
                     List<Box> boxes = shape.getBoundingBoxes();
                     if (!boxes.isEmpty()) {
@@ -109,6 +113,75 @@ public class BlockOverlay extends Module {
             Box localBox = box.offset(-cam.x, -cam.y, -cam.z);
             drawShaderEdgeBox(e.getMatrixStack(), localBox, color, a);
         }
+    }
+
+    private void drawFillBox(MatrixStack ms, Box box, int color, float alpha) {
+        if (startMillis < 0L) startMillis = System.currentTimeMillis();
+        float time = (System.currentTimeMillis() - startMillis) / 1000.0F;
+        float r = ((color >> 16) & 0xFF) / 255.0F;
+        float g = ((color >> 8) & 0xFF) / 255.0F;
+        float b = (color & 0xFF) / 255.0F;
+
+        float r2 = (float) Math.max(0, Math.min(255, ((color >> 16) & 0xFF) + 60)) / 255.0F;
+        float g2 = (float) Math.max(0, Math.min(255, ((color >> 8) & 0xFF) - 20)) / 255.0F;
+        float b2 = (float) Math.max(0, Math.min(255, (color & 0xFF) + 40)) / 255.0F;
+
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        RenderSystem.disableCull();
+        RenderSystem.enableDepthTest();
+        RenderSystem.depthMask(false);
+
+        ShaderProgram shader = RenderSystem.setShader(ShaderUtil.blockOverlayFill);
+        if (shader != null) {
+            setUniform(shader, "color", r, g, b);
+            setUniform(shader, "color2", r2, g2, b2);
+            setUniform(shader, "time", time);
+            setUniform(shader, "speed", shaderSpeed.getFloatValue());
+            setUniform(shader, "alpha", alpha);
+        }
+
+        Matrix4f matrix = ms.peek().getPositionMatrix();
+        float x1 = (float) box.minX, y1 = (float) box.minY, z1 = (float) box.minZ;
+        float x2 = (float) box.maxX, y2 = (float) box.maxY, z2 = (float) box.maxZ;
+        int ia = (int) (alpha * 255.0F);
+
+        BufferBuilder buf = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE_COLOR);
+
+        buf.vertex(matrix, x1, y1, z1).texture(0, 0).color(r, g, b, ia);
+        buf.vertex(matrix, x2, y1, z1).texture(1, 0).color(r, g, b, ia);
+        buf.vertex(matrix, x2, y1, z2).texture(1, 1).color(r, g, b, ia);
+        buf.vertex(matrix, x1, y1, z2).texture(0, 1).color(r, g, b, ia);
+
+        buf.vertex(matrix, x1, y2, z1).texture(0, 0).color(r, g, b, ia);
+        buf.vertex(matrix, x2, y2, z1).texture(1, 0).color(r, g, b, ia);
+        buf.vertex(matrix, x2, y2, z2).texture(1, 1).color(r, g, b, ia);
+        buf.vertex(matrix, x1, y2, z2).texture(0, 1).color(r, g, b, ia);
+
+        buf.vertex(matrix, x1, y1, z1).texture(0, 0).color(r, g, b, ia);
+        buf.vertex(matrix, x1, y2, z1).texture(1, 0).color(r, g, b, ia);
+        buf.vertex(matrix, x1, y2, z2).texture(1, 1).color(r, g, b, ia);
+        buf.vertex(matrix, x1, y1, z2).texture(0, 1).color(r, g, b, ia);
+
+        buf.vertex(matrix, x2, y1, z1).texture(0, 0).color(r, g, b, ia);
+        buf.vertex(matrix, x2, y2, z1).texture(1, 0).color(r, g, b, ia);
+        buf.vertex(matrix, x2, y2, z2).texture(1, 1).color(r, g, b, ia);
+        buf.vertex(matrix, x2, y1, z2).texture(0, 1).color(r, g, b, ia);
+
+        buf.vertex(matrix, x1, y1, z1).texture(0, 0).color(r, g, b, ia);
+        buf.vertex(matrix, x2, y1, z1).texture(1, 0).color(r, g, b, ia);
+        buf.vertex(matrix, x2, y2, z1).texture(1, 1).color(r, g, b, ia);
+        buf.vertex(matrix, x1, y2, z1).texture(0, 1).color(r, g, b, ia);
+
+        buf.vertex(matrix, x1, y1, z2).texture(0, 0).color(r, g, b, ia);
+        buf.vertex(matrix, x2, y1, z2).texture(1, 0).color(r, g, b, ia);
+        buf.vertex(matrix, x2, y2, z2).texture(1, 1).color(r, g, b, ia);
+        buf.vertex(matrix, x1, y2, z2).texture(0, 1).color(r, g, b, ia);
+
+        BufferRenderer.drawWithGlobalProgram(buf.end());
+        RenderSystem.depthMask(true);
+        RenderSystem.enableCull();
+        RenderSystem.disableBlend();
     }
 
     private void drawShaderEdgeBox(MatrixStack ms, Box box, int color, float alpha) {

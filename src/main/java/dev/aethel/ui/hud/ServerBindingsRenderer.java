@@ -3,6 +3,8 @@ package dev.aethel.ui.hud;
 import dev.aethel.module.list.player.Assistant;
 import dev.aethel.module.list.render.Interface;
 import dev.aethel.module.settings.BindSetting;
+import dev.aethel.module.settings.ModeSetting;
+import dev.aethel.module.settings.Setting;
 import dev.aethel.util.IMinecraft;
 import dev.aethel.util.base.Instance;
 import dev.aethel.util.keyboard.KeyStorage;
@@ -26,16 +28,11 @@ public class ServerBindingsRenderer implements IMinecraft {
     private final Interface interfaceModule;
     private final Animation alpha = new Animation(Easing.EXPO_OUT, 200);
 
-    private static final float ITEM_SPACING = 3.0f;
-    private static final float MAIN_BLOCK_HEIGHT = 26f;
-    private static final float BIND_BLOCK_HEIGHT = 14f;
-    private static final float TOTAL_BLOCK_HEIGHT = MAIN_BLOCK_HEIGHT + BIND_BLOCK_HEIGHT;
-    private static final float MIN_WIDTH = 28f;
+    private static final float BLOCK_SIZE = 26f;
     private static final float ICON_SIZE = 14f;
-    private static final float BLOCK_SHRINK = 2f;
-    private static final float ROUNDING = 4f;
-    private static final float BIND_ROUNDING = 3f;
-    private static final float BIND_TEXT_SIZE = 7f;
+    private static final float ITEM_SPACING = 2f;
+    private static final float ROUNDING = 3f;
+    private static final float KEY_TEXT_SIZE = 5.5f;
 
     public ServerBindingsRenderer(Interface interfaceModule) {
         this.interfaceModule = interfaceModule;
@@ -52,7 +49,8 @@ public class ServerBindingsRenderer implements IMinecraft {
         Assistant assistant = Instance.get(Assistant.class);
         if (assistant == null || !assistant.isEnabled()) return;
 
-        List<BindingEntry> entries = collectEntries(assistant);
+        Assistant.Mode currentMode = getCurrentMode(assistant);
+        List<BindingEntry> entries = collectEntries(assistant, currentMode);
         if (entries.isEmpty()) {
             interfaceModule.getServerBindingsDrag().setWidth(0);
             interfaceModule.getServerBindingsDrag().setHeight(0);
@@ -73,27 +71,17 @@ public class ServerBindingsRenderer implements IMinecraft {
         int t1 = ColorProvider.getThemeColor();
         int t2 = ColorProvider.getThemeColorTwo();
 
-        float maxBlockWidth = MIN_WIDTH;
-        for (BindingEntry entry : entries) {
-            String keyName = getKeyDisplayName(entry.setting.getValue());
-            float keyNameWidth = Fonts.SFBOLD.get().getWidth(keyName, BIND_TEXT_SIZE) + 6f;
-            maxBlockWidth = Math.max(maxBlockWidth, keyNameWidth + 8f);
-        }
-
-        float totalWidth = maxBlockWidth * entries.size() + (entries.size() - 1) * ITEM_SPACING;
+        float totalWidth = BLOCK_SIZE * entries.size() + (entries.size() - 1) * ITEM_SPACING;
 
         float currentX = x;
         Matrix4f m2 = context.getMatrices().peek().getPositionMatrix();
 
         for (BindingEntry entry : entries) {
             String keyName = getKeyDisplayName(entry.setting.getValue());
-            float blockWidth = maxBlockWidth;
-            float keyNameWidth = Fonts.SFBOLD.get().getWidth(keyName, BIND_TEXT_SIZE) + 6f;
-
-            float bx = currentX + BLOCK_SHRINK * 0.5f;
+            float bx = currentX;
             float by = y;
-            float bw = blockWidth - BLOCK_SHRINK;
-            float bh = MAIN_BLOCK_HEIGHT;
+            float bw = BLOCK_SIZE;
+            float bh = BLOCK_SIZE;
 
             DrawUtil.drawShadow(m2, bx, by, bw, bh, ROUNDING, 8f, ColorProvider.rgba(0, 0, 0, 80));
             interfaceModule.drawGlow(m2, bx, by, bw, bh, ROUNDING, globalAlpha);
@@ -110,8 +98,8 @@ public class ServerBindingsRenderer implements IMinecraft {
             );
             DrawUtil.drawRound(bx, by, bw, bh, ROUNDING, bgColor);
 
-            float iconX = currentX + (blockWidth - ICON_SIZE) / 2f;
-            float iconY = by + (bh - ICON_SIZE) / 2f;
+            float iconX = bx + (bw - ICON_SIZE) / 2f;
+            float iconY = by + (bh - ICON_SIZE) / 2f - 2f;
 
             context.getMatrices().push();
             context.getMatrices().translate(iconX, iconY, 50);
@@ -131,39 +119,39 @@ public class ServerBindingsRenderer implements IMinecraft {
                 }
             }
 
-            float pillW = Math.min(bw - 2f, keyNameWidth + 4f);
-            float pillH = BIND_BLOCK_HEIGHT;
-            float pillX = currentX + (blockWidth - pillW) / 2f;
-            float pillY = by + MAIN_BLOCK_HEIGHT + 1f;
+            float keyTextY = by + bh - KEY_TEXT_SIZE - 2f;
+            float keyTextW = Fonts.SFBOLD.get().getWidth(keyName, KEY_TEXT_SIZE);
+            float keyTextX = bx + (bw - keyTextW) / 2f;
+            DrawUtil.drawText(Fonts.SFBOLD.get(), keyName, keyTextX, keyTextY,
+                    ColorProvider.rgba(255, 255, 255, aInt), KEY_TEXT_SIZE);
 
-            int[] pillGlow = ColorProvider.getOrbitalRect(t1, t2, 800.0, aInt);
-            DrawUtil.drawShadow(m2, pillX, pillY, pillW, pillH, BIND_ROUNDING, 8f, ColorProvider.rgba(0, 0, 0, 80));
-            DrawUtil.drawRound(pillX - 0.5f, pillY - 0.5f, pillW + 1f, pillH + 1f, BIND_ROUNDING,
-                    pillGlow[0], pillGlow[1], pillGlow[2], pillGlow[3]);
-
-            int pillBg = ColorProvider.rgba(
-                    ((t1 >> 16) & 0xFF) >> 2,
-                    ((t1 >> 8) & 0xFF) >> 2,
-                    (t1 & 0xFF) >> 2,
-                    Math.min(135, aInt)
-            );
-            DrawUtil.drawRound(pillX, pillY, pillW, pillH, BIND_ROUNDING, pillBg);
-
-            float textX = pillX + (pillW - Fonts.SFBOLD.get().getWidth(keyName, BIND_TEXT_SIZE)) / 2f;
-            float textY = pillY + (pillH - BIND_TEXT_SIZE) / 2f + 1f;
-            DrawUtil.drawText(Fonts.SFBOLD.get(), keyName, textX, textY, ColorProvider.rgba(255, 255, 255, aInt), BIND_TEXT_SIZE);
-
-            currentX += blockWidth + ITEM_SPACING;
+            currentX += BLOCK_SIZE + ITEM_SPACING;
         }
 
         interfaceModule.getServerBindingsDrag().setWidth(totalWidth);
-        interfaceModule.getServerBindingsDrag().setHeight(TOTAL_BLOCK_HEIGHT);
+        interfaceModule.getServerBindingsDrag().setHeight(BLOCK_SIZE);
     }
 
-    private List<BindingEntry> collectEntries(Assistant assistant) {
+    private Assistant.Mode getCurrentMode(Assistant assistant) {
+        String mode = "";
+        for (Setting s : assistant.getSettings()) {
+            if (s instanceof ModeSetting ms && "Server".equals(ms.getName())) {
+                mode = ms.getValue();
+                break;
+            }
+        }
+        return switch (mode) {
+            case "HolyWorld" -> Assistant.Mode.HOLYWORLD;
+            case "LonyGrief" -> Assistant.Mode.LONYGRIEF;
+            default -> Assistant.Mode.FUNTIME;
+        };
+    }
+
+    private List<BindingEntry> collectEntries(Assistant assistant, Assistant.Mode currentMode) {
         List<BindingEntry> result = new ArrayList<>();
 
         for (Assistant.ItemUsageEntry entry : assistant.getItemUsages()) {
+            if (entry.mode() != currentMode) continue;
             int key = entry.setting().getValue();
             if (key == -999) continue;
             ItemStack stack = findStack(entry.itemUsage().getItem());
@@ -172,6 +160,7 @@ public class ServerBindingsRenderer implements IMinecraft {
         }
 
         for (Assistant.NamedKeyBind named : assistant.getNamedKeyBinds()) {
+            if (named.mode != currentMode) continue;
             int key = named.setting.getValue();
             if (key == -999) continue;
             ItemStack stack = findNamedStack(named.item, named.namePart);

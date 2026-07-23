@@ -85,6 +85,7 @@ public class ModuleStorage implements IMinecraft {
         modules.add(new NameProtect());
         modules.add(new ClickPearl());
         modules.add(new BlockOverlay());
+        // Testik10 removed
         modules.add(new SeeInvisibles());
         modules.add(new Prediction());
         modules.add(new DamageTint());
