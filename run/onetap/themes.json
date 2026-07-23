@@ -1,0 +1,10 @@
+{
+  "activeTheme": "Cyber Blue",
+  "customThemes": [
+    {
+      "name": "Custom 1",
+      "color1": -65536,
+      "color2": -16711936
+    }
+  ]
+}

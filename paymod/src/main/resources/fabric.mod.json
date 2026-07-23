@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "paymod",
+  "version": "${version}",
+  "name": "PayMod",
+  "description": "Автоматический перевод излишка денег каждую минуту",
+  "authors": [],
+  "contact": {},
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "main": [
+      "com.paymod.PayMod"
+    ],
+    "client": [
+      "com.paymod.PayModClient"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "fabric": "*",
+    "minecraft": "~1.21.11",
+    "java": ">=21"
+  }
+}

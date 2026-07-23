@@ -1,0 +1,399 @@
+package dev.aethel.util;
+
+import dev.aethel.module.Module;
+import dev.aethel.module.list.combat.aura.rotation.Rotation;
+import dev.aethel.module.list.combat.aura.rotation.RotationComponent;
+import dev.aethel.util.inventory.InventoryTask;
+import dev.aethel.util.keyboard.KeyStorage;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.UtilityClass;
+import net.minecraft.entity.EquipmentSlot;
+import net.minecraft.item.*;
+import net.minecraft.network.packet.c2s.play.CloseHandledScreenC2SPacket;
+import net.minecraft.network.packet.c2s.play.PlayerInteractItemC2SPacket;
+import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
+import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.util.Hand;
+import net.minecraft.util.collection.DefaultedList;
+
+@UtilityClass
+public class InventoryUtil implements IMinecraft {
+
+    public void swapToOffhand(int slot) {
+        if (slot == -1) return;
+        if (mc.player == null || mc.interactionManager == null) return;
+
+        int syncId = mc.player.currentScreenHandler.syncId;
+        mc.interactionManager.clickSlot(syncId, slot, 40, SlotActionType.SWAP, mc.player);
+        mc.player.networkHandler.sendPacket(new CloseHandledScreenC2SPacket(syncId));
+    }
+
+    public void swapSlots(int from, int to) {
+        if (mc.player == null || mc.interactionManager == null) return;
+
+        int syncId = mc.player.currentScreenHandler.syncId;
+        int swapSlot = (to >= 0 && to <= 8) ? to : (from >= 0 && from <= 8) ? from : -1;
+        if (swapSlot == -1) return;
+
+        mc.interactionManager.clickSlot(syncId, (swapSlot == to) ? from : to, swapSlot, SlotActionType.SWAP, mc.player);
+        mc.player.networkHandler.sendPacket(new CloseHandledScreenC2SPacket(syncId));
+    }
+
+    public void swapSlotsFull(int from, int to) {
+        if (mc.player == null || mc.interactionManager == null) return;
+
+        int syncId = mc.player.currentScreenHandler.syncId;
+
+        mc.interactionManager.clickSlot(syncId, from, to, SlotActionType.SWAP, mc.player);
+        mc.player.networkHandler.sendPacket(new CloseHandledScreenC2SPacket(syncId));
+    }
+
+    public void useItem(Hand hand) {
+        if (mc.player == null || mc.world == null || mc.getNetworkHandler() == null) return;
+
+        float currentYaw = mc.player.getYaw();
+        float currentPitch = mc.player.getPitch();
+
+        mc.interactionManager.sendSequencedPacket(mc.world, seq ->
+                new PlayerInteractItemC2SPacket(hand, seq, currentYaw, currentPitch));
+        mc.player.swingHand(hand);
+    }
+
+    public void swapToSlot(int slot) {
+        swapToSlot(slot, true);
+    }
+
+    public void swapToSlot(int slot, boolean client) {
+        if (mc.player == null) return;
+        if (slot < 0 || slot > 8) return;
+
+        if (mc.player.getInventory().selectedSlot == slot) return;
+
+        mc.player.getInventory().selectedSlot = slot;
+    }
+
+    public int findItem(Item item, boolean inHotbar) {
+        if (mc.player == null) return -1;
+
+        DefaultedList<ItemStack> main = mc.player.getInventory().main;
+        int firstSlot = inHotbar ? 0 : 9;
+        int lastSlot = inHotbar ? 9 : 36;
+        int finalSlot = -1;
+
+        for (int i = firstSlot; i < lastSlot; i++) {
+            if (main.get(i).getItem() == item) {
+                finalSlot = i;
+            }
+        }
+        return finalSlot;
+    }
+
+    public int findItem(Item input) {
+        if (mc.player == null) return -1;
+
+        DefaultedList<ItemStack> main = mc.player.getInventory().main;
+        int slot = -1;
+
+        for (int i = 0; i < 36; i++) {
+            ItemStack stack = main.get(i);
+            if (stack.getItem() == input) {
+                slot = i;
+                break;
+            }
+        }
+
+        if (slot < 9 && slot != -1) {
+            slot += 36;
+        }
+        return slot;
+    }
+
+    public boolean hasElytraEquipped() {
+        return mc.player.getEquippedStack(EquipmentSlot.CHEST).isOf(Items.ELYTRA);
+    }
+
+    public int findAxeInInventory(boolean inHotbar) {
+        if (mc.player == null) return -1;
+
+        DefaultedList<ItemStack> main = mc.player.getInventory().main;
+        int firstSlot = inHotbar ? 0 : 9;
+        int lastSlot = inHotbar ? 9 : 36;
+
+        for (int i = firstSlot; i < lastSlot; i++) {
+            if (main.get(i).getItem() instanceof AxeItem) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    public int findBestSlotInHotBar() {
+        int emptySlot = findEmptySlot();
+        return emptySlot != -1 ? emptySlot : findNonSwordSlot();
+    }
+
+    public int findEmptySlot() {
+        if (mc.player == null) return -1;
+
+        DefaultedList<ItemStack> main = mc.player.getInventory().main;
+        int currentItem = mc.player.getInventory().selectedSlot;
+
+        for (int i = 0; i < 9; i++) {
+            if (main.get(i).isEmpty() && currentItem != i) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private static int findNonSwordSlot() {
+        if (mc.player == null) return -1;
+
+        DefaultedList<ItemStack> main = mc.player.getInventory().main;
+        int currentItem = mc.player.getInventory().selectedSlot;
+
+        for (int i = 0; i < 9; i++) {
+            ItemStack stack = main.get(i);
+            if (!(stack.getItem() instanceof SwordItem) && currentItem != i) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    public int countNonEnchantedTotems() {
+        if (mc.player == null) return -1;
+        int count = 0;
+        DefaultedList<ItemStack> main = mc.player.getInventory().main;
+
+        for (int i = 0; i < 36; i++) {
+            ItemStack stack = main.get(i);
+            if (stack.isOf(Items.TOTEM_OF_UNDYING) && !stack.hasEnchantments()) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    public int findBestTotemSlot(boolean saveEnchanted) {
+        DefaultedList<ItemStack> main = mc.player.getInventory().main;
+
+        for (int i = 0; i < 36; i++) {
+            ItemStack stack = main.get(i);
+            if (stack.isOf(Items.TOTEM_OF_UNDYING)) {
+                if (!saveEnchanted || !stack.hasEnchantments()) {
+                    return i < 9 ? i + 36 : i;
+                }
+            }
+        }
+        return -1;
+    }
+
+    @Getter
+    @RequiredArgsConstructor
+    public static class ItemUsage {
+        private final Item item;
+        private final Module provider;
+
+        private boolean forceUse = false;
+        @Setter private boolean useRotation = true;
+        @Setter private int priority = 5;
+        private Rotation customRotation = new Rotation(Float.MIN_VALUE, Float.MIN_VALUE);
+
+        private int targetSlot = -1;
+        private int previousSlot = -1;
+
+        private Runnable pendingAction = null;
+        private UsageState usageState = UsageState.IDLE;
+        private int stateDelay = 0;
+
+        public void onDisable() {
+            usageState = UsageState.IDLE;
+            stateDelay = 0;
+        }
+
+        public void updateCustomRotation(Rotation rotation) {
+            customRotation = rotation;
+        }
+
+        public void applyRotation() {
+            if (!useRotation) return;
+
+            float yaw = customRotation.getYaw() != Float.MIN_VALUE ? customRotation.getYaw() : mc.player.getYaw();
+            float pitch = customRotation.getPitch() != Float.MIN_VALUE ? customRotation.getPitch() : mc.player.getPitch();
+
+            Rotation targetRot = new Rotation(yaw, pitch);
+
+            RotationComponent.update(targetRot, 180f, 180f, 180f, 180f, 3, priority, true);
+        }
+
+        public void handleUse(boolean isLegit) {
+            if (mc.currentScreen == null && pendingAction != null) {
+                pendingAction.run();
+            }
+
+            if (mc.player.getItemCooldownManager().isCoolingDown(item.getDefaultStack())) return;
+
+            if (isLegit) {
+                pendingAction = () -> legitMode(-1);
+            } else {
+                packetMode();
+            }
+
+            forceUse = false;
+        }
+
+
+        public void handleUse(int bind, boolean isLegit) {
+            if (!isLegit) {
+                pendingAction = null;
+            }
+
+            if (mc.currentScreen == null && pendingAction != null) {
+                pendingAction.run();
+            }
+
+            if (bind != -1 && !KeyStorage.isPressed(bind) && mc.currentScreen == null) {
+                forceUse = false;
+                return;
+            }
+
+            if (isLegit) {
+                pendingAction = () -> legitMode(bind);
+            } else {
+                packetMode();
+            }
+        }
+
+        public void packetMode() {
+            int invSlot = InventoryUtil.findItem(item, false);
+            int hbSlot = InventoryUtil.findItem(item, true);
+
+            if (mc.player.getMainHandStack().isOf(item)) {
+                applyRotation();
+                InventoryUtil.useItem(Hand.MAIN_HAND);
+                forceUse = true;
+                return;
+            }
+
+            int oldSlot = mc.player.getInventory().selectedSlot;
+            int bestSlot = InventoryUtil.findBestSlotInHotBar();
+
+            if (hbSlot != -1) {
+                applyRotation();
+                InventoryUtil.swapToSlot(hbSlot);
+                InventoryUtil.useItem(Hand.MAIN_HAND);
+                InventoryUtil.swapToSlot(oldSlot);
+                forceUse = true;
+            } else if (invSlot != -1) {
+                Runnable runnable = () -> {
+                    applyRotation();
+                    InventoryUtil.swapSlots(invSlot, bestSlot);
+                    InventoryUtil.swapToSlot(bestSlot);
+                    InventoryUtil.useItem(Hand.MAIN_HAND);
+                    InventoryUtil.swapToSlot(oldSlot);
+                    InventoryUtil.swapSlots(invSlot, bestSlot);
+                    forceUse = true;
+                };
+
+                if (dev.aethel.util.SlownessManager.isEnabled()) {
+                    dev.aethel.util.SlownessManager.applySlowness(10, runnable);
+                } else {
+                    runnable.run();
+                }
+            }
+        }
+
+        public void legitMode(int bind) {
+            switch (usageState) {
+                case IDLE:
+                    if (bind != -1 && !KeyStorage.isPressed(bind)) return;
+
+                    int hbSlot = InventoryUtil.findItem(item, true);
+                    int invSlot = InventoryUtil.findItem(item, false);
+                    if (hbSlot == -1 && invSlot == -1) return;
+
+                    previousSlot = mc.player.getInventory().selectedSlot;
+                    if (hbSlot != -1) {
+                        targetSlot = hbSlot;
+                    } else {
+                        targetSlot = invSlot;
+                    }
+                    usageState = UsageState.MOVE_TO_OFFHAND;
+                    stateDelay = 0;
+                    break;
+
+                case MOVE_TO_OFFHAND:
+                    if (stateDelay-- > 0) return;
+
+                    Runnable moveToMain = () -> {
+                        if (targetSlot < 9) {
+                            InventoryUtil.swapToSlot(targetSlot);
+                            stateDelay = 2;
+                        } else {
+                            int swapTo = mc.player.getInventory().selectedSlot;
+                            int screenSlot = targetSlot < 9 ? targetSlot + 36 : targetSlot;
+                            InventoryToolkit.clickSlot(screenSlot, swapTo, SlotActionType.SWAP);
+                            InventoryToolkit.switchTo(swapTo);
+                        }
+                        usageState = UsageState.USE_ITEM;
+                        stateDelay--;
+                    };
+                    if (SlownessManager.isEnabled() && !(targetSlot < 9)) {
+                        SlownessManager.applySlowness(10L, moveToMain);
+                    } else {
+                        moveToMain.run();
+                    }
+                    break;
+
+                case USE_ITEM:
+                    if (stateDelay-- > 0) return;
+
+                    applyRotation();
+                    InventoryUtil.useItem(Hand.MAIN_HAND);
+                    usageState = UsageState.RESTORE_OFFHAND;
+                    stateDelay = 0;
+                    break;
+
+                case RESTORE_OFFHAND:
+                    if (stateDelay-- > 0) return;
+
+                    Runnable restoreMain = () -> {
+                        if (targetSlot >= 9) {
+                            int swapTo = mc.player.getInventory().selectedSlot;
+                            int screenSlot = targetSlot;
+                            InventoryToolkit.clickSlot(screenSlot, swapTo, SlotActionType.SWAP);
+                            InventoryTask.closeScreen(true);
+                        }
+                        usageState = UsageState.RESTORE_SLOT;
+                        stateDelay = 0;
+                    };
+                    if (SlownessManager.isEnabled() && !(targetSlot < 9)) {
+                        SlownessManager.applySlowness(10L, restoreMain);
+                    } else {
+                        restoreMain.run();
+                    }
+                    break;
+
+                case RESTORE_SLOT:
+                    if (stateDelay-- > 0) return;
+
+                    InventoryUtil.swapToSlot(previousSlot);
+                    usageState = UsageState.IDLE;
+                    pendingAction = null;
+                    forceUse = true;
+                    break;
+            }
+        }
+
+        public enum UsageState {
+            IDLE,
+            MOVE_TO_OFFHAND,
+            USE_ITEM,
+            RESTORE_OFFHAND,
+            RESTORE_SLOT
+        }
+    }
+}

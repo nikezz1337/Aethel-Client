@@ -1,0 +1,18 @@
+{
+  "projectPath": ":",
+  "classpaths": {
+    "test": [
+      "C:\\Users\\User\\Desktop\\untitled\\paymod\\build\\classes\\java\\test",
+      "C:\\Users\\User\\Desktop\\untitled\\paymod\\build\\resources\\test",
+      "C:\\Users\\User\\Desktop\\untitled\\paymod\\out\\test\\classes",
+      "C:\\Users\\User\\Desktop\\untitled\\paymod\\out\\test\\resources"
+    ],
+    "main": [
+      "C:\\Users\\User\\Desktop\\untitled\\paymod\\build\\classes\\java\\main",
+      "C:\\Users\\User\\Desktop\\untitled\\paymod\\build\\resources\\main",
+      "C:\\Users\\User\\Desktop\\untitled\\paymod\\build\\devlibs\\paymod-1.0.1-dev.jar",
+      "C:\\Users\\User\\Desktop\\untitled\\paymod\\out\\production\\classes",
+      "C:\\Users\\User\\Desktop\\untitled\\paymod\\out\\production\\resources"
+    ]
+  }
+}

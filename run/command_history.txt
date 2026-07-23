@@ -1,0 +1,50 @@
+/rtp
+/ah search алмазная кирка
+/кез
+/rtp
+/hub
+/l ponpon
+/hub
+/rtp
+/hub
+/tpaccept
+/hub
+/tpa zabityxx
+/hub
+/l ponpon
+/reg ponpon ponpon
+/l ponpon
+/exchange
+/pay ethereale2py 100k
+/ah
+/exchange
+/ah search незеритовый шлем
+/ah search элитры
+/ah search Фейерверк
+/кез
+/rtp
+/hub
+/rtp
+/pay BROODFATHER 1.2kk
+/rtp
+/l ponpon
+/pay BROODFATHER 1.2kk
+/hub
+/rtp
+/ac Grim
+/give mace
+/give wind_charge 15234
+/give prismarine_shard
+/give sword
+/give diamond_sword
+/reg ponpon ponpon
+/pay danyhagolova2uha all
+/rtp
+/hub
+/rtp
+/рги
+/rtp
+/кез
+/rtp
+/кез
+/rtp

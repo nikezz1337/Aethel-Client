@@ -1,0 +1,50 @@
+package dev.ethereal.inject.render;
+
+import dev.ethereal.api.utils.player.PlayerUtil;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.hud.InGameHud;
+import net.minecraft.client.render.RenderTickCounter;
+import net.minecraft.scoreboard.ScoreboardObjective;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import dev.ethereal.api.event.Events;
+import dev.ethereal.api.event.events.render.Render2DEvent;
+import dev.ethereal.api.utils.render.KawaseBlurProgram;
+import dev.ethereal.client.features.modules.render.InterfaceModule;
+import dev.ethereal.client.features.modules.render.RemovalsModule;
+
+@Mixin(InGameHud.class)
+public class MixinInGameHud {
+    @Inject(method = "render", at = @At("HEAD"))
+    public void renderHookHead(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
+        KawaseBlurProgram.render(context.getMatrices());
+    }
+
+    @Inject(method = "render", at = @At("RETURN"))
+    public void renderHookReturn(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
+        Events.post(new Render2DEvent(context, context.getMatrices(), tickCounter.getTickDelta(false)));
+    }
+
+    @Inject(method = "renderStatusEffectOverlay", at = @At("HEAD"), cancellable = true)
+    private void renderStatusEffectOverlay(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
+        if (InterfaceModule.getInstance().widgets.isEnabled("Potions")) {
+            ci.cancel();
+        }
+    }
+
+    @Inject(method = "renderScoreboardSidebar(Lnet/minecraft/client/gui/DrawContext;Lnet/minecraft/scoreboard/ScoreboardObjective;)V", at = @At(value = "HEAD"), cancellable = true)
+    private void renderScoreboardSidebar(DrawContext context, ScoreboardObjective objective, CallbackInfo ci) {
+        if (MinecraftClient.getInstance().player == null) return;
+
+        if (objective.getDisplayName().getString().contains("Анархия") && (PlayerUtil.isFT() || PlayerUtil.isST())) {
+            PlayerUtil.ftAn = Integer.parseInt(objective.getDisplayName().getString().split("-")[1].trim());
+        }
+
+            if (RemovalsModule.getInstance().isScoreboard()) {
+                ci.cancel();
+      }
+    }
+}

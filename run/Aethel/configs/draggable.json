@@ -1,0 +1,51 @@
+{
+  "Watermark": {
+    "x": 4.0,
+    "y": 4.0,
+    "initialXVal": 4.0,
+    "initialYVal": 4.0,
+    "name": "Watermark"
+  },
+  "HotKeys": {
+    "x": 204.0,
+    "y": 157.0,
+    "initialXVal": 100.0,
+    "initialYVal": 50.0,
+    "name": "HotKeys"
+  },
+  "StaffList": {
+    "x": 622.0,
+    "y": 114.0,
+    "initialXVal": 200.0,
+    "initialYVal": 50.0,
+    "name": "StaffList"
+  },
+  "Potions": {
+    "x": 18.0,
+    "y": 48.0,
+    "initialXVal": 300.0,
+    "initialYVal": 50.0,
+    "name": "Potions"
+  },
+  "TargetHUD": {
+    "x": 425.0,
+    "y": 439.0,
+    "initialXVal": 130.0,
+    "initialYVal": 130.0,
+    "name": "TargetHUD"
+  },
+  "TotemCounter": {
+    "x": 26.0,
+    "y": 200.0,
+    "initialXVal": 200.0,
+    "initialYVal": 200.0,
+    "name": "TotemCounter"
+  },
+  "Notifications": {
+    "x": 480.0,
+    "y": 354.0,
+    "initialXVal": 10.0,
+    "initialYVal": 10.0,
+    "name": "Notifications"
+  }
+}

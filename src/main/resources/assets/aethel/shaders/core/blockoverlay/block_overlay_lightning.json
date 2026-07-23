@@ -1,0 +1,21 @@
+{
+  "vertex": "aethel:core/blockoverlay/block_overlay",
+  "fragment": "aethel:core/blockoverlay/block_overlay_lightning",
+  "samplers": [
+    { "name": "Sampler0" }
+  ],
+  "uniforms": [
+    { "name": "ModelViewMat", "type": "matrix4x4", "count": 16, "values": [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0] },
+    { "name": "ProjMat", "type": "matrix4x4", "count": 16, "values": [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0] },
+    { "name": "texelSize", "type": "float", "count": 2, "values": [0.001, 0.001] },
+    { "name": "color", "type": "float", "count": 3, "values": [1.0, 0.3, 0.6] },
+    { "name": "color2", "type": "float", "count": 3, "values": [0.5, 0.1, 1.0] },
+    { "name": "time", "type": "float", "count": 1, "values": [0.0] },
+    { "name": "speed", "type": "float", "count": 1, "values": [1.0] },
+    { "name": "scale", "type": "float", "count": 1, "values": [8.0] },
+    { "name": "outline", "type": "float", "count": 1, "values": [1.0] },
+    { "name": "glow", "type": "float", "count": 1, "values": [1.0] },
+    { "name": "fill", "type": "float", "count": 1, "values": [1.0] },
+    { "name": "alpha", "type": "float", "count": 1, "values": [1.0] }
+  ]
+}

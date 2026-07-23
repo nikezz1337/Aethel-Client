@@ -1,0 +1,11 @@
+{
+  "proxy-enabled": false,
+  "accounts": {
+    "": {
+      "IP:PORT": "34.65.200.219:443",
+      "type": "SOCKS5",
+      "username": "jugglers",
+      "password": "buy_premium_account"
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "vertex": "aethel:core/damage_tint",
+  "fragment": "aethel:core/damage_tint",
+  "samplers": [
+    { "name": "Sampler0" }
+  ],
+  "uniforms": [
+    { "name": "ModelViewMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
+    { "name": "ProjMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
+    { "name": "Strength", "type": "float", "count": 1, "values": [ 0.0 ] },
+    { "name": "Desat", "type": "float", "count": 1, "values": [ 0.0 ] },
+    { "name": "Contrast", "type": "float", "count": 1, "values": [ 0.0 ] },
+    { "name": "VignetteColor", "type": "float", "count": 3, "values": [ 0.8, 0.0, 0.0 ] }
+  ]
+}

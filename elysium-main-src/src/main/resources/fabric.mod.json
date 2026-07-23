@@ -1,0 +1,39 @@
+{
+	"schemaVersion": 1,
+	"id": "elysium",
+	"version": "${version}",
+	"name": "elysium",
+	"description": "best dlc 1.21.4",
+	"authors": [
+		"zenZ and Kodek<3"
+	],
+	"contact": {
+		"homepage": "https://elysiumdlc.fun",
+		"sources": "https://t.me/antidaunleak"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/elysium/icon.png",
+	"environment": "*",
+	"jars": [
+		{
+			"file": "META-INF/jars/baritone-standalone-fabric-1.13.1.jar"
+		}
+	],
+	"entrypoints": {
+		"main": [
+			"antileak.base.elysium"
+		],
+		"client": [
+			"antileak.base.client.ElysiumClient"
+		]
+	},
+	"mixins": [
+		"elysium.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.18.4",
+		"minecraft": "~1.21.4",
+		"java": ">=21",
+		"fabric-api": "*"
+	}
+}

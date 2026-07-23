@@ -1,0 +1,72 @@
+{
+  "enabled": {
+    "sounds": [
+      "ethereal:enabled"
+    ]
+  },
+  "disabled": {
+    "sounds": [
+      "ethereal:disabled"
+    ]
+  },
+  "nursultan_off": {
+    "sounds": [
+      "ethereal:nursultan_off"
+    ]
+  },
+  "nursultan_on": {
+    "sounds": [
+      "ethereal:nursultan_on"
+    ]
+  },
+  "celestial_off": {
+    "sounds": [
+      "ethereal:celestial_off"
+    ]
+  },
+  "celestial_on": {
+    "sounds": [
+      "ethereal:celestial_on"
+    ]
+  },
+  "smooth_off": {
+    "sounds": [
+      "ethereal:smooth_off"
+    ]
+  },
+  "smooth_on": {
+    "sounds": [
+      "ethereal:smooth_on"
+    ]
+  },
+  "akrien_on": {
+    "sounds": [
+      "ethereal:akrien_on"
+    ]
+  },
+  "akrien_off": {
+    "sounds": [
+      "ethereal:akrien_off"
+    ]
+  },
+  "tech_on": {
+    "sounds": [
+      "ethereal:tech_on"
+    ]
+  },
+  "tech_off": {
+    "sounds": [
+      "ethereal:tech_off"
+    ]
+  },
+  "blop_on": {
+    "sounds": [
+      "ethereal:blop_on"
+    ]
+  },
+  "blop_off": {
+    "sounds": [
+      "ethereal:blop_off"
+    ]
+  }
+}

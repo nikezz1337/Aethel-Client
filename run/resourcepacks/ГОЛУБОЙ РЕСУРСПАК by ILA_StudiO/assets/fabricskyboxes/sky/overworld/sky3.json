@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 2,
+  "type": "single-sprite-square-textured",
+  "texture": "imgs:cloud1.png",
+  "blend": {"type" : "alpha"},
+  "properties": {
+    "priority": 2,
+    "fade": {
+      "startFadeIn": 12500,
+      "endFadeIn": 12750,
+      "endFadeOut": 13416.66
+    },
+    "rotation": {
+      "axis": [
+        0.0,
+        -0.2,
+        0.0
+      ]
+    },
+    "transitionInDuration": 20,
+    "transitionOutDuration": 20
+  }
+}

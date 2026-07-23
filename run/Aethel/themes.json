@@ -1,0 +1,35 @@
+{
+  "activeTheme": "Custom 6",
+  "customThemes": [
+    {
+      "name": "Custom 1",
+      "color1": -55770,
+      "color2": -1184275
+    },
+    {
+      "name": "Custom 2",
+      "color1": -5267715,
+      "color2": -4587273
+    },
+    {
+      "name": "Custom 3",
+      "color1": -15000805,
+      "color2": -16777216
+    },
+    {
+      "name": "Custom 4",
+      "color1": -65490,
+      "color2": -16711690
+    },
+    {
+      "name": "Custom 5",
+      "color1": -65536,
+      "color2": -16711936
+    },
+    {
+      "name": "Custom 6",
+      "color1": -2517033,
+      "color2": -921103
+    }
+  ]
+}

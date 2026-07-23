@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "aethel",
+  "version": "${version}",
+  "name": "Aethel",
+  "description": "",
+  "authors": [],
+  "contact": {},
+  "license": "All-Rights-Reserved",
+  "icon": "assets/aethel/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "dev.aethel.Aethel"
+    ]
+  },
+  "accessWidener": "aethel.accesswidener",
+  "mixins": [
+    "aethel.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric-api": "*",
+    "minecraft": "${minecraft_version}"
+  }
+}

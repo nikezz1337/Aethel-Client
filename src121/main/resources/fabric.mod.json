@@ -1,0 +1,35 @@
+{
+    "accessWidener": "ethereal.accesswidener",
+	"schemaVersion": 1,
+	"id": "ethereal",
+	"version": "${version}",
+	"name": "ethereal",
+	"description": "t.me/EtherealSoftik",
+	"authors": [
+		"nelxi / laifik / der goizer"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/ethereal/icon.png",
+	"environment": "client",
+	"entrypoints": {
+		"client": [
+          "dev.ethereal.Ethereal"
+		]
+	},
+	"mixins": [
+		"ethereal.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.16.5",
+		"minecraft": "~1.21.4",
+		"java": ">=21",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"another-mod": "*"
+	}
+}

@@ -1,0 +1,43 @@
+package dev.ethereal.inject.render;
+
+import net.minecraft.client.network.AbstractClientPlayerEntity;
+import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.item.HeldItemRenderer;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.item.FilledMapItem;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.Hand;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import dev.ethereal.api.utils.render.hands.ShaderHandsRenderer;
+import dev.ethereal.client.features.modules.render.ShaderHandsModule;
+import dev.ethereal.client.features.modules.render.SwingAnimationModule;
+
+@Mixin(HeldItemRenderer.class)
+public abstract class MixinHeldItemRenderer {
+
+    @Inject(method = "renderItem(FLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider$Immediate;Lnet/minecraft/client/network/ClientPlayerEntity;I)V", at = @At("HEAD"))
+    private void onRenderItemHead(float tickProgress, MatrixStack matrices, VertexConsumerProvider.Immediate immediate, ClientPlayerEntity player, int light, CallbackInfo ci) {
+        ShaderHandsModule shaderHands = ShaderHandsModule.getInstance();
+        if (shaderHands == null || !shaderHands.isEnabled()) return;
+        ShaderHandsRenderer.getInstance().captureBeforeHands();
+    }
+
+    @Inject(method = "renderItem(FLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider$Immediate;Lnet/minecraft/client/network/ClientPlayerEntity;I)V", at = @At("TAIL"))
+    private void onRenderItemTail(float tickProgress, MatrixStack matrices, VertexConsumerProvider.Immediate immediate, ClientPlayerEntity player, int light, CallbackInfo ci) {
+        ShaderHandsModule shaderHands = ShaderHandsModule.getInstance();
+        if (shaderHands == null || !shaderHands.isEnabled()) return;
+        ShaderHandsRenderer.getInstance().captureAfterHands();
+    }
+
+    @Inject(method = "renderFirstPersonItem", at = @At(value = "HEAD"), cancellable = true)
+    private void onRenderItem(AbstractClientPlayerEntity player, float tickDelta, float pitch, Hand hand, float swingProgress, ItemStack item, float equipProgress, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, CallbackInfo ci) {
+        if (!(item.isEmpty()) && !(item.getItem() instanceof FilledMapItem)) {
+            ci.cancel();
+            SwingAnimationModule.getInstance().handleRenderItem(player, tickDelta, pitch, hand, swingProgress, item, equipProgress, matrices, vertexConsumers, light);
+        }
+    }
+}
